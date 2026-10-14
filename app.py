@@ -1,25 +1,21 @@
 import os
-import joblib
 import pandas as pd
 from flask import Flask, request, jsonify
+from model_io import ModelLoadError, load_trained_model
 
 app = Flask(__name__, static_folder='frontend', static_url_path='')
 
 # Load the model on startup
 project_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(project_dir, 'house_price_model.pkl')
+metadata_path = os.path.join(project_dir, 'model_metadata.json')
 
-if not os.path.exists(model_path):
-    print(f"WARNING: Model file not found at {model_path}.")
-    print("Please ensure train.py runs successfully to train the model.")
+try:
+    model = load_trained_model(model_path, metadata_path)
+    print("Model loaded successfully.")
+except ModelLoadError as exc:
+    print(f"Model unavailable: {exc}")
     model = None
-else:
-    try:
-        model = joblib.load(model_path)
-        print("Model loaded successfully.")
-    except Exception as e:
-        print(f"Error loading model: {e}")
-        model = None
 
 @app.route('/')
 def index():
@@ -67,14 +63,11 @@ def predict():
     """Handles price prediction requests."""
     global model
     if model is None:
-        # Try to reload the model in case it was created after server startup
-        if os.path.exists(model_path):
-            try:
-                model = joblib.load(model_path)
-            except Exception as e:
-                return jsonify({'error': f'Model failed to load: {str(e)}'}), 500
-        else:
-            return jsonify({'error': 'Model file not found. Please train the model first.'}), 500
+        # Permit training after server startup, but reject incompatible artifacts.
+        try:
+            model = load_trained_model(model_path, metadata_path)
+        except ModelLoadError as exc:
+            return jsonify({'error': str(exc)}), 503
 
     try:
         data, error_response = _get_json_payload()
@@ -114,7 +107,6 @@ def predict():
 @app.route('/model_info', methods=['GET'])
 def model_info():
     """Returns model metrics and feature importances from metadata JSON."""
-    metadata_path = os.path.join(project_dir, 'model_metadata.json')
     if os.path.exists(metadata_path):
         try:
             with open(metadata_path, 'r', encoding='utf-8') as f:
