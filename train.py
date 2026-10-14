@@ -8,6 +8,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, mean_absolute_percentage_error
 import joblib
+import sklearn
+import scipy
 
 def generate_synthetic_data(filepath, n_samples=1000):
     """Generates synthetic housing data and saves it to a CSV file."""
@@ -165,9 +167,10 @@ def train_and_evaluate(df, project_dir):
     plt.savefig(os.path.join(plots_dir, 'model_evaluation.png'))
     plt.close()
     
-    # Plot residuals distribution for the best model (Random Forest)
-    best_model_name = 'Random Forest'
-    rf_preds = results[best_model_name]['preds']
+    # The demo serves Random Forest so its feature importances can be shown.
+    # Linear Regression may score better on this mostly additive synthetic data.
+    selected_model_name = 'Random Forest'
+    rf_preds = results[selected_model_name]['preds']
     residuals = y_test - rf_preds
     
     plt.figure(figsize=(8, 5))
@@ -180,17 +183,17 @@ def train_and_evaluate(df, project_dir):
     plt.savefig(os.path.join(plots_dir, 'residuals_distribution.png'))
     plt.close()
     
-    # Save the best model
-    best_model_path = os.path.join(project_dir, 'house_price_model.pkl')
-    joblib.dump(rf_model, best_model_path)
-    print(f"\nBest model saved to {best_model_path}")
+    # Save the model selected for the interactive demo.
+    model_path = os.path.join(project_dir, 'house_price_model.pkl')
+    joblib.dump(rf_model, model_path)
+    print(f"\nDemo model saved to {model_path}")
     
     # Plot feature importances for Random Forest
     importances = rf_model.feature_importances_
     feat_imp = pd.Series(importances, index=X.columns).sort_values(ascending=False)
     
     plt.figure(figsize=(8, 5))
-    sns.barplot(x=feat_imp.values, y=feat_imp.index, palette='viridis')
+    sns.barplot(x=feat_imp.values, y=feat_imp.index, color='teal')
     plt.title('Feature Importances (Random Forest)')
     plt.xlabel('Importance Score')
     plt.ylabel('Feature')
@@ -204,6 +207,13 @@ def train_and_evaluate(df, project_dir):
     # Save model metadata to JSON
     import json
     metadata = {
+        'selected_model': selected_model_name,
+        'training_environment': {
+            'scikit-learn': sklearn.__version__,
+            'numpy': np.__version__,
+            'scipy': scipy.__version__,
+            'joblib': joblib.__version__
+        },
         'best_rf_params': grid_search.best_params_,
         'feature_importances': feat_imp.to_dict(),
         'metrics': {}
@@ -236,4 +246,3 @@ if __name__ == "__main__":
     
     # Training & Evaluation
     train_and_evaluate(df, project_dir)
-

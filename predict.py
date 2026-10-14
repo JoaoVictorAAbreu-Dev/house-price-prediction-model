@@ -1,21 +1,8 @@
 import os
 import sys
 import argparse
-import joblib
 import pandas as pd
-
-def load_model(model_path):
-    """Loads the serialized machine learning model."""
-    if not os.path.exists(model_path):
-        print(f"Error: Model file not found at {model_path}")
-        print("Please run train.py first to train and save the model.")
-        sys.exit(1)
-    try:
-        model = joblib.load(model_path)
-        return model
-    except Exception as e:
-        print(f"Error loading model: {e}")
-        sys.exit(1)
+from model_io import ModelLoadError, load_trained_model
 
 def get_interactive_inputs():
     """Prompts the user interactively for house features."""
@@ -77,7 +64,7 @@ def get_interactive_inputs():
     return sqft, bedrooms, bathrooms, age, distance
 
 def main():
-    parser = argparse.ArgumentParser(description="Predict house prices using the trained Random Forest model.")
+    parser = argparse.ArgumentParser(description="Predict house prices using the trained demo model.")
     parser.add_argument("--sqft", type=int, help="Living area in square feet")
     parser.add_argument("--bedrooms", type=int, help="Number of bedrooms")
     parser.add_argument("--bathrooms", type=float, help="Number of bathrooms")
@@ -91,7 +78,11 @@ def main():
     model_path = os.path.join(project_dir, 'house_price_model.pkl')
     
     # Load model
-    model = load_model(model_path)
+    try:
+        model = load_trained_model(model_path, os.path.join(project_dir, 'model_metadata.json'))
+    except ModelLoadError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
     
     # Determine if CLI args were provided or we should run interactively
     cli_args_provided = all(v is not None for v in [args.sqft, args.bedrooms, args.bathrooms, args.age, args.distance])

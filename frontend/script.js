@@ -331,5 +331,5 @@ function generateInsightText(importances) {
     };
     
     const topName = featureNamesEN[topFeature] || topFeature;
-    document.getElementById('insight-text').innerHTML = `The most influential feature in the price prediction model is <strong>${topName}</strong>, driving <strong>${(topVal * 100).toFixed(1)}%</strong> of the model's decisions. Living space and location factors combined account for over 75% of the Random Forest's pricing formula.`;
+    document.getElementById('insight-text').textContent = `The highest global feature importance in this Random Forest is ${topName} (${(topVal * 100).toFixed(1)}%). This does not describe its contribution to an individual estimate.`;
 }

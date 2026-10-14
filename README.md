@@ -33,21 +33,35 @@ O repositorio inclui:
 ### 1. Clonar o repositorio
 
 ```bash
-git clone https://github.com/JoaoVictorAAbreu-Dev/project-house-price-prediction.git
-cd project-house-price-prediction
+git clone https://github.com/JoaoVictorAAbreu-Dev/house-price-prediction-model.git
+cd house-price-prediction-model
 ```
 
 ### 2. Criar ambiente virtual e instalar dependencias
 
+Use Python 3.12 ou mais recente (validado aqui com Python 3.14). O arquivo
+`requirements.txt` fixa as versoes das bibliotecas usadas para gerar o modelo
+incluido no repositorio.
+
+Linux/macOS:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+Windows (PowerShell):
+
 ```powershell
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
 ### 3. Treinar o modelo
 
-```powershell
+```bash
 python train.py
 ```
 
@@ -57,9 +71,20 @@ Esse comando gera:
 - `model_metadata.json`
 - arquivos em `plots/`
 
+O modelo incluido no GitHub pode ser usado diretamente apos instalar as
+dependencias fixadas. Rode `train.py` para regenerar os artefatos com o seu
+ambiente. A API e a CLI recusam um modelo treinado com versoes diferentes das
+bibliotecas registradas em `model_metadata.json`, evitando resultados sem
+compatibilidade garantida.
+
+O Random Forest e o modelo selecionado para a demonstracao interativa e para o
+grafico de importancia das variaveis. A regressao linear tambem e avaliada e
+obtem R2 maior neste conjunto sintetico; o Random Forest nao e apresentado
+como o modelo mais preciso.
+
 ### 4. Rodar a API e o frontend
 
-```powershell
+```bash
 python app.py
 ```
 
@@ -70,19 +95,19 @@ Abra:
 
 Modo interativo:
 
-```powershell
+```bash
 python predict.py
 ```
 
 Modo com argumentos:
 
-```powershell
+```bash
 python predict.py --sqft 2200 --bedrooms 3 --bathrooms 2.5 --age 8 --distance 4.2
 ```
 
 ### 6. Rodar os testes
 
-```powershell
+```bash
 pytest
 ```
 
@@ -106,7 +131,7 @@ Resposta:
 
 ```json
 {
-  "price": 445267.35,
+  "price": 445267.36,
   "breakdown": {
     "base_value": 100000,
     "size_contribution": 264000,
@@ -117,12 +142,17 @@ Resposta:
 }
 ```
 
+O campo `breakdown` reproduz termos da formula usada para gerar os dados
+sinteticos. Nao e uma explicacao da previsao do Random Forest e seus valores
+nao precisam somar o campo `price`.
+
 ### `GET /model_info`
 
 Retorna:
 - melhores hiperparametros do Random Forest
 - metricas dos modelos
 - feature importances
+- modelo selecionado e versoes das dependencias usadas no treinamento
 
 ## Configuracao
 
@@ -134,7 +164,7 @@ Variaveis opcionais definidas em `.env.example`:
 
 ## Tecnologias
 
-- Python 3.8+
+- Python 3.12+
 - Flask
 - pandas
 - numpy
